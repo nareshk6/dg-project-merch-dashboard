@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dollar General · Project Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0a0b0f;
+  --bg2: #111318;
+  --bg3: #181b22;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f1f5;
+  --text2: #8b8fa8;
+  --text3: #555870;
+  --accent: #5b7fff;
+  --accent2: #8b5cf6;
+  --green: #34d99b;
+  --amber: #f5a623;
+  --red: #f0506e;
+  --card-r: 14px;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,11,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 60px;
+}
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 13px; color: #fff;
+}
+.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+.brand-sub { font-size: 11px; color: var(--text3); margin-left: 6px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-stat { text-align: right; }
+.topbar-stat-val { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.topbar-stat-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* SIDEBAR */
+.layout { display: flex; padding-top: 60px; min-height: 100vh; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  position: fixed; top: 60px; left: 0; bottom: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1.5rem 0;
+  z-index: 50;
+}
+.sidebar-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+.sidebar-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-weight: 600; margin-bottom: 8px; padding: 0 0.5rem; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  color: var(--text2); font-size: 13px;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(91,127,255,0.12); color: var(--accent); }
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+.nav-count {
+  margin-left: auto; font-size: 10px; font-weight: 600;
+  background: var(--bg3); border-radius: 10px;
+  padding: 1px 7px; color: var(--text3);
+}
+.nav-item.active .nav-count { background: rgba(91,127,255,0.2); color: var(--accent); }
+
+/* MAIN */
+.main { margin-left: 220px; flex: 1; padding: 2rem; max-width: calc(100vw - 220px); }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 2rem; }
+.page-title { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -0.03em; margin-bottom: 4px; }
+.page-title span { color: var(--accent); }
+.page-sub { color: var(--text2); font-size: 13px; }
+
+/* METRIC GRID */
+.metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 2rem; }
+.metric-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--card-r); padding: 1.25rem;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.metric-card:hover { border-color: var(--border2); }
+.metric-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--accent-color, var(--accent)), transparent);
+  opacity: 0.6;
+}
+.metric-card.green { --accent-color: var(--green); }
+.metric-card.amber { --accent-color: var(--amber); }
+.metric-card.red { --accent-color: var(--red); }
+.metric-card.purple { --accent-color: var(--accent2); }
+.m-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.m-value { font-family: var(--font-display); font-weight: 800; font-size: 30px; letter-spacing: -0.03em; }
+.m-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* CHARTS SECTION */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 16px; margin-bottom: 2rem; }
+.chart-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--card-r); padding: 1.5rem;
+}
+.card-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; margin-bottom: 1.25rem; color: var(--text); }
+.card-title span { color: var(--text3); font-weight: 400; font-size: 12px; margin-left: 6px; }
+
+/* FILTER BAR */
+.filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.filter-btn {
+  font-family: var(--font-body); font-size: 12px; padding: 5px 14px;
+  border-radius: 20px; border: 1px solid var(--border);
+  background: transparent; color: var(--text2); cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--border2); color: var(--text); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; }
+
+/* SEARCH */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 14px; margin-bottom: 1.5rem;
+  transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--border2); }
+.search-bar input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+  width: 100%;
+}
+.search-bar input::placeholder { color: var(--text3); }
+
+/* PROJECT GRID */
+.projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.project-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--card-r); padding: 1.25rem;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.project-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.project-card.highlighted { border-color: rgba(91,127,255,0.4); }
+.pc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.pc-name { font-family: var(--font-display); font-weight: 700; font-size: 14px; line-height: 1.3; flex: 1; margin-right: 8px; }
+.domain-tag {
+  font-size: 10px; padding: 3px 8px; border-radius: 6px;
+  font-weight: 600; white-space: nowrap; flex-shrink: 0;
+}
+.tag-storenet { background: rgba(91,127,255,0.15); color: #8ba4ff; }
+.tag-eio { background: rgba(52,217,155,0.12); color: #34d99b; }
+.tag-pricing { background: rgba(245,166,35,0.12); color: #f5a623; }
+.tag-generic { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.tag-metrics { background: rgba(240,80,110,0.12); color: #f0506e; }
+.tag-space { background: rgba(52,217,155,0.08); color: #6ee7b7; }
+.tag-vnc { background: rgba(139,150,170,0.15); color: #8b96aa; }
+.pc-bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-name { width: 72px; font-size: 11px; color: var(--text3); flex-shrink: 0; }
+.bar-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.bar-num { width: 34px; text-align: right; font-size: 11px; font-weight: 600; }
+.pc-footer { display: flex; align-items: center; justify-content: space-between; }
+.status-badge {
+  font-size: 10px; padding: 3px 9px; border-radius: 6px;
+  font-weight: 600; letter-spacing: 0.02em;
+}
+.s-inprogress { background: rgba(52,217,155,0.12); color: var(--green); }
+.s-yettostart { background: rgba(245,166,35,0.1); color: var(--amber); }
+.s-onhold { background: rgba(240,80,110,0.1); color: var(--red); }
+.owner-text { font-size: 11px; color: var(--text3); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* DETAIL PANEL */
+.detail-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.detail-overlay.open { opacity: 1; pointer-events: all; }
+.detail-panel {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px; width: 580px; max-width: 95vw;
+  max-height: 85vh; overflow-y: auto;
+  padding: 2rem;
+  transform: translateY(20px); transition: transform 0.25s;
+}
+.detail-overlay.open .detail-panel { transform: translateY(0); }
+.dp-close {
+  position: absolute; top: 1.25rem; right: 1.25rem;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.dp-close:hover { background: var(--border); color: var(--text); }
+.dp-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 1.5rem; position: relative; }
+.dp-icon {
+  width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+}
+.dp-title { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+.dp-domain { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.dp-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+.dp-score-card { background: var(--bg3); border-radius: 10px; padding: 12px; text-align: center; }
+.dp-score-val { font-family: var(--font-display); font-weight: 800; font-size: 22px; }
+.dp-score-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.dp-section { margin-bottom: 1.25rem; }
+.dp-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 600; margin-bottom: 8px; }
+.dp-info-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dp-info-row:last-child { border-bottom: none; }
+.dp-info-key { color: var(--text3); }
+.dp-info-val { font-weight: 500; text-align: right; }
+.dp-notes { background: var(--bg3); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--text2); border-left: 3px solid var(--amber); }
+.dp-notes.empty { color: var(--text3); font-style: italic; }
+.dp-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0; flex-wrap: wrap; }
+.dp-tab { font-size: 12px; padding: 6px 14px; border-radius: 8px 8px 0 0; border: none; background: transparent; color: var(--text3); cursor: pointer; font-family: var(--font-body); transition: all 0.15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.dp-tab:hover { color: var(--text2); }
+.dp-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(91,127,255,0.06); }
+.dp-tab-content { display: none; }
+.dp-tab-content.active { display: block; }
+.instr-list { list-style: none; padding: 0; }
+.instr-list li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+.instr-list li:last-child { border-bottom: none; }
+.instr-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(91,127,255,0.15); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.instr-bullet { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; margin-top: 7px; }
+.accept-item { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+.accept-item:last-child { border-bottom: none; }
+.check-icon { width: 18px; height: 18px; border-radius: 50%; background: rgba(52,217,155,0.15); color: var(--green); font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.goal-box { background: rgba(91,127,255,0.07); border: 1px solid rgba(91,127,255,0.2); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+/* EDIT MODE */
+.edit-toggle-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.edit-btn {
+  font-size: 11px; padding: 5px 14px; border-radius: 8px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); cursor: pointer; font-family: var(--font-body);
+  display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+}
+.edit-btn:hover { background: var(--bg3); color: var(--text); }
+.edit-btn.save { background: var(--accent); border-color: var(--accent); color: #fff; }
+.edit-btn.save:hover { opacity: 0.9; }
+.edit-btn.cancel { color: var(--text3); }
+.edit-btn.cancel:hover { color: var(--red); border-color: var(--red); }
+.edit-btn-group { display: flex; gap: 8px; }
+.saved-badge { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 5px; opacity: 0; transition: opacity 0.4s; }
+.saved-badge.show { opacity: 1; }
+.edit-textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 14px; font-size: 13px;
+  color: var(--text); font-family: var(--font-body); line-height: 1.7;
+  resize: vertical; outline: none; transition: border-color 0.15s;
+  min-height: 80px;
+}
+.edit-textarea:focus { border-color: var(--accent); }
+.edit-list-item {
+  display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px;
+}
+.edit-list-item textarea {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px;
+  color: var(--text); font-family: var(--font-body); line-height: 1.6;
+  resize: none; outline: none; min-height: 40px; transition: border-color 0.15s;
+}
+.edit-list-item textarea:focus { border-color: var(--accent); }
+.del-btn {
+  width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text3); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  margin-top: 6px; transition: all 0.15s;
+}
+.del-btn:hover { border-color: var(--red); color: var(--red); background: rgba(240,80,110,0.08); }
+.add-item-btn {
+  width: 100%; padding: 8px; border-radius: 8px; border: 1px dashed var(--border2);
+  background: transparent; color: var(--text3); cursor: pointer; font-size: 12px;
+  font-family: var(--font-body); margin-top: 8px; transition: all 0.15s;
+}
+.add-item-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,127,255,0.05); }
+.edit-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 600; margin-bottom: 8px; }
+.edit-inline-input {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 5px 10px; font-size: 13px;
+  color: var(--text); font-family: var(--font-body);
+  outline: none; transition: border-color 0.15s; width: 200px; text-align: right;
+}
+.edit-inline-input:focus { border-color: var(--accent); }
+.edit-inline-select {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 5px 10px; font-size: 13px;
+  color: var(--text); font-family: var(--font-body);
+  outline: none; transition: border-color 0.15s; cursor: pointer;
+}
+.edit-inline-select:focus { border-color: var(--accent); }
+
+/* LEGEND */
+.legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+.empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.project-card { animation: fadeIn 0.3s ease both; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; max-width: 100vw; }
+  .metrics-row { grid-template-columns: repeat(3, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <!-- Dollar General logo: yellow bg, bold black text, authentic brand styling -->
+    <div style="background:#FFD700;border-radius:7px;padding:5px 11px;display:flex;flex-direction:column;align-items:center;line-height:1;gap:1px;">
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#1a1a1a;letter-spacing:-0.01em;">Dollar</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:10px;color:#1a1a1a;letter-spacing:0.08em;text-transform:uppercase;">General</span>
+    </div>
+    <span class="brand-sub" style="margin-left:10px;">Project Intelligence</span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stat">
+      <div class="topbar-stat-val" id="tb-total">20</div>
+      <div class="topbar-stat-lbl">Projects</div>
+    </div>
+    <div class="topbar-stat">
+      <div class="topbar-stat-val" style="color:var(--green);" id="tb-active">4</div>
+      <div class="topbar-stat-lbl">Active</div>
+    </div>
+    <div class="live-dot" title="Live"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <div class="nav-item active" onclick="setView('all',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        All Projects
+        <span class="nav-count" id="nc-all">20</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">By Domain</div>
+      <div class="nav-item" onclick="setView('StoreNet / SIMS',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 5v6l-6 3L2 11V5z"/></svg>
+        StoreNet / SIMS
+        <span class="nav-count" id="nc-storenet">4</span>
+      </div>
+      <div class="nav-item" onclick="setView('EIO',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        EIO
+        <span class="nav-count" id="nc-eio">2</span>
+      </div>
+      <div class="nav-item" onclick="setView('Pricing',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M8 3v10"/><circle cx="8" cy="8" r="6"/></svg>
+        Pricing
+        <span class="nav-count" id="nc-pricing">2</span>
+      </div>
+      <div class="nav-item" onclick="setView('Generic Tools',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2l4 4-4 4M10 14H6"/></svg>
+        Generic Tools
+        <span class="nav-count" id="nc-generic">6</span>
+      </div>
+      <div class="nav-item" onclick="setView('Metrics - Merch',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+        Metrics
+        <span class="nav-count" id="nc-metrics">4</span>
+      </div>
+      <div class="nav-item" onclick="setView('Space Planning',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M6 10V6h4v4"/></svg>
+        Space Planning
+        <span class="nav-count" id="nc-space">1</span>
+      </div>
+      <div class="nav-item" onclick="setView('VNC',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M5 4V3M11 4V3M6 8h4"/></svg>
+        VNC
+        <span class="nav-count" id="nc-vnc">1</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">By Status</div>
+      <div class="nav-item" onclick="setStatus('In-Progress',this)">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></span>
+        In Progress
+        <span class="nav-count">4</span>
+      </div>
+      <div class="nav-item" onclick="setStatus('Yet to Start',this)">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;"></span>
+        Yet to Start
+        <span class="nav-count">13</span>
+      </div>
+      <div class="nav-item" onclick="setStatus('On-Hold',this)">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;"></span>
+        On Hold
+        <span class="nav-count">3</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Dollar General <span>Dashboard</span></h1>
+      <p class="page-sub" id="page-sub">Showing all 20 projects across 7 domains</p>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="m-label">Total Projects</div>
+        <div class="m-value">20</div>
+        <div class="m-sub">7 domains</div>
+      </div>
+      <div class="metric-card green">
+        <div class="m-label">In Progress</div>
+        <div class="m-value" style="color:var(--green);">4</div>
+        <div class="m-sub">Active development</div>
+      </div>
+      <div class="metric-card amber">
+        <div class="m-label">Yet to Start</div>
+        <div class="m-value" style="color:var(--amber);">13</div>
+        <div class="m-sub">Queued</div>
+      </div>
+      <div class="metric-card red">
+        <div class="m-label">On Hold</div>
+        <div class="m-value" style="color:var(--red);">3</div>
+        <div class="m-sub">Paused</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="m-label">Avg Innovation</div>
+        <div class="m-value" style="color:var(--accent2);">6.1<span style="font-size:16px;">/10</span></div>
+        <div class="m-sub">vs industry</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="card-title">Status <span>distribution</span></div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#34d99b;"></div>In progress</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f5a623;"></div>Yet to start</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f0506e;"></div>On hold</div>
+        </div>
+        <div style="position:relative;height:160px;">
+          <canvas id="statusChart" role="img" aria-label="Donut chart: 4 in progress, 13 yet to start, 3 on hold">4 in progress, 13 yet to start, 3 on hold</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Priority <span>split</span></div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#f0506e;"></div>High (8)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f5a623;"></div>Medium (6)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#34d99b;"></div>Low (6)</div>
+        </div>
+        <div style="position:relative;height:160px;">
+          <canvas id="priorityChart" role="img" aria-label="Bar chart: High 8, Medium 6, Low 6">High 8, Medium 6, Low 6</canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Efficiency vs Innovation <span>bubble map</span></div>
+        <div style="position:relative;height:188px;">
+          <canvas id="bubbleChart" role="img" aria-label="Bubble chart of efficiency vs innovation for all projects">All projects plotted by efficiency and innovation</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#555870" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input type="text" placeholder="Search projects, owners, domains..." id="searchInput" oninput="applyFilters()"/>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Type:</span>
+      <button class="filter-btn active" onclick="setTypeFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setTypeFilter('Gen AI',this)">Gen AI</button>
+      <button class="filter-btn" onclick="setTypeFilter('Project',this)">Project</button>
+    </div>
+
+    <div class="projects-grid" id="projectsGrid"></div>
+  </main>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <button class="dp-close" onclick="closeDetailBtn()">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+const PROJECTS = [
+  { domain:"StoreNet / SIMS", id:"SIMSHHT", name:"Smart Config Advisor (HHT)", status:"In-Progress", priority:"High", type:"Gen AI", owner:"Naresh", efficiency:62, innovation:7, notes:"Prod DB access requested, yet to be provisioned by RPI/DBA – Shelby (4/24)" },
+  { domain:"StoreNet / SIMS", id:"SIMSBOPC", name:"Smart Config Advisor (BOPC)", status:"In-Progress", priority:"High", type:"Gen AI", owner:"StoreNet / SIMS", efficiency:60, innovation:7, notes:"" },
+  { domain:"StoreNet / SIMS", id:"SimsTestGen", name:"SimsTestGen", status:"Yet to Start", priority:"High", type:"Gen AI", owner:"Vikram / Muthaiyan", efficiency:30, innovation:8, notes:"Required DG Network access" },
+  { domain:"StoreNet / SIMS", id:"BOPCAutomation", name:"BOPC Desktop Automation", status:"In-Progress", priority:"High", type:"Project", owner:"Muthaiyan", efficiency:70, innovation:8, notes:"POC completed" },
+  { domain:"EIO", id:"EIOAnomalyAnalyzer", name:"EIO Anomaly Analyzer", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"—", efficiency:25, innovation:7, notes:"Showcased POC with Mohit and Akhilesh; will share code base to them" },
+  { domain:"EIO", id:"DigitalOOSAnalyzer", name:"Digital OOS Analyzer", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"—", efficiency:20, innovation:6, notes:"" },
+  { domain:"Space Planning", id:"TestDataGen", name:"Test Data Generation (Open Access)", status:"Yet to Start", priority:"Medium", type:"Project", owner:"Haresh", efficiency:20, innovation:6, notes:"" },
+  { domain:"VNC", id:"BatchJobValidation", name:"Batch Job Validation", status:"Yet to Start", priority:"Medium", type:"Project", owner:"Meghma / Adharshini", efficiency:15, innovation:5, notes:"" },
+  { domain:"Pricing", id:"PromoCreator", name:"PromoCreator", status:"Yet to Start", priority:"Medium", type:"Project", owner:"Muppe Reddy / Niraj", efficiency:18, innovation:6, notes:"Will start once we move to Pricing team" },
+  { domain:"Pricing", id:"PLUPrice", name:"PLU & Price Label Comparison", status:"In-Progress", priority:"High", type:"Project", owner:"Muppe Reddy / Niraj / Kavya", efficiency:65, innovation:7, notes:"" },
+  { domain:"Generic Tools", id:"OrphanedDefects", name:"Orphaned Defects / Test Case", status:"Yet to Start", priority:"Medium", type:"Gen AI", owner:"Nazeer", efficiency:22, innovation:7, notes:"" },
+  { domain:"Metrics - Merch", id:"MerchOverview", name:"MerchOverview", status:"On-Hold", priority:"Low", type:"Gen AI", owner:"Kasthuri", efficiency:10, innovation:5, notes:"Similar dashboard created by other teams, so not starting" },
+  { domain:"Metrics - Merch", id:"WSRDashboard", name:"WSR Dashboard", status:"On-Hold", priority:"Low", type:"Gen AI", owner:"—", efficiency:10, innovation:4, notes:"" },
+  { domain:"Metrics - Merch", id:"MonthlyMetrics", name:"Monthly Metrics", status:"On-Hold", priority:"Low", type:"Gen AI", owner:"—", efficiency:10, innovation:4, notes:"" },
+  { domain:"Metrics - Merch", id:"ReleaseTracker", name:"ReleaseTracker", status:"Yet to Start", priority:"High", type:"Gen AI", owner:"Haresh", efficiency:28, innovation:6, notes:"" },
+  { domain:"Generic Tools", id:"DefectPredictor", name:"DefectPredictor", status:"Yet to Start", priority:"Medium", type:"Gen AI", owner:"Meghma / Adharshini / Sai Haritha", efficiency:12, innovation:8, notes:"Not in priority list" },
+  { domain:"Generic Tools", id:"IncidentAnalyzer", name:"IncidentAnalyzer", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"Nazeer", efficiency:10, innovation:6, notes:"Not in priority list" },
+  { domain:"Generic Tools", id:"ProblemAnalyzer", name:"ProblemAnalyzer", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"Nazeer", efficiency:10, innovation:6, notes:"Not in priority list" },
+  { domain:"Generic Tools", id:"KnowledgeScout", name:"KnowledgeScout", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"Ojas", efficiency:8, innovation:7, notes:"Not in priority list" },
+  { domain:"Generic Tools", id:"XrayVision", name:"XrayVision", status:"Yet to Start", priority:"Low", type:"Gen AI", owner:"Santhoshini", efficiency:8, innovation:7, notes:"Not in priority list" },
+];
+
+const INNOVATION_REMARKS = {
+  "SIMSHHT": "Similar to MDM tools like ServiceMax & ToolsNet. AI-driven config recommendation adds real differentiation over standard device management platforms.",
+  "SIMSBOPC": "BOPC dashboards exist in enterprise (SCCM, Intune). AI-based config advisory layer adds novelty vs standard device management.",
+  "SimsTestGen": "Generic test gen tools (Faker, Mockaroo) exist but domain-specific SIMS test gen with auto-validation is a strong enterprise innovation.",
+  "BOPCAutomation": "Playwright+PyAutoGUI+Azure OCR is cutting-edge. Most corporate tools still use legacy UFT/Selenium. Highly innovative stack.",
+  "EIOAnomalyAnalyzer": "Inventory anomaly detection common in supply chain (SAP, Oracle). Gen AI layer in retail ops context adds meaningful value.",
+  "DigitalOOSAnalyzer": "Digital OOS analyzers exist in retail platforms (Blue Yonder, o9). Targeted internal variant — useful but not highly differentiated externally.",
+  "TestDataGen": "Test data generation tools exist (GenRocket, Tricentis). Open Access-specific first-pass rate focus makes it contextually innovative.",
+  "BatchJobValidation": "Batch validation frameworks exist widely (Control-M, ESP). Limited innovation unless AI anomaly detection is incorporated.",
+  "PromoCreator": "Promo creation tools are widespread (Salesforce, Vend). Value here is internal workflow automation rather than external innovation.",
+  "PLUPrice": "Pricing audit automation with PLU validation across GOLD/POS is relevant. Custom cross-system comparison is solid and practical.",
+  "OrphanedDefects": "Orphaned defect/TC reporting via AI is a gap in most ALM tools. Auto-tagging and linking recommendation is innovative quality governance.",
+  "MerchOverview": "Merch ops dashboards are widely available (Tableau, PowerBI). Limited differentiation vs existing BI tools without AI-driven insights.",
+  "WSRDashboard": "WSR dashboards are standard in every enterprise. Low innovation unless automated narrative generation or anomaly callouts are added.",
+  "MonthlyMetrics": "Monthly KPI dashboards are very common. Low innovation vs tools like Domo, Looker, or existing PowerBI setups.",
+  "ReleaseTracker": "Release trackers exist (Jira, ServiceNow). AI-powered status summarization or risk prediction would differentiate this significantly.",
+  "DefectPredictor": "ML-based defect prediction is emerging. Tools like Sealights exist but internal training on org's historical data is highly innovative.",
+  "IncidentAnalyzer": "Incident analyzers exist (PagerDuty, Splunk). AI-powered RCA with categorization tailored to internal systems adds moderate innovation.",
+  "ProblemAnalyzer": "Problem analyzers exist in ITSM (ServiceNow, Freshservice). AI insights layer on internal tickets is useful but not highly differentiated.",
+  "KnowledgeScout": "Enterprise KB search tools (Guru, Confluence AI, Glean) exist. Using Gemini for internal KB search with domain context is a solid innovation.",
+  "XrayVision": "Deep-dive CR/incident analysis tools are emerging (Nexthink, Aternity). Multi-source AI analysis approach is forward-thinking for QA ops.",
+};
+
+const MODULE_INSTRUCTIONS = {
+  "SIMSHHT": {
+    goal: "Build a Gen AI-powered real-time advisor that reads HHT (Handheld Terminal) device data and recommends the optimal configuration to test before store deployment.",
+    whatToBuild: ["Real-time HHT device info dashboard (model, OS version, app version, last deployment result)", "AI config recommendation engine — suggests best config combo to test based on device profile", "Config history viewer — shows past tested configs and outcomes per device", "Alert panel for devices with high failure risk"],
+    dataSources: ["Prod DB (SIMS) — device registry, deployment logs", "HHT config master table", "Historical deployment outcome data"],
+    steps: ["Get Prod DB access provisioned (Shelby / RPI DBA) — BLOCKER", "Map HHT device schema and identify config fields", "Build device info API layer", "Train/prompt AI model on config-outcome pairs", "Build recommendation UI (React or web)", "Test with 5–10 real HHT devices", "Pilot in 1 store, measure first-pass deployment rate"],
+    acceptance: ["AI recommends config with ≥80% accuracy vs manually chosen configs", "Dashboard loads device info in under 2s", "Recommendation shows top 3 config options with confidence score", "Works for all HHT models in the fleet"]
+  },
+  "SIMSBOPC": {
+    goal: "Create a BOPC (Back Office PC) system dashboard that shows device health info and recommends test configurations for BOPC deployments across stores.",
+    whatToBuild: ["BOPC device inventory view — OS, app versions, hardware specs per store", "AI-driven test config advisor for BOPC systems", "Side-by-side config comparison tool (current vs recommended)", "Deployment readiness score per store"],
+    dataSources: ["SIMS BOPC device registry", "Store deployment history", "Software version catalog"],
+    steps: ["Inventory all BOPC device types and config dimensions", "Connect to SIMS data source for device info", "Build device grid UI with filter by store/region", "Integrate AI recommendation (reuse HHT model logic where possible)", "Add export to CSV for test teams", "UAT with 3 stores"],
+    acceptance: ["All active BOPC devices visible with current config", "Recommended config shown per device within 3s", "Store team can export device list for test planning", "Handles min 500 devices without performance issues"]
+  },
+  "SimsTestGen": {
+    goal: "Auto-generate SIMS test data and create automated test cases + validation scenarios so QA teams can achieve full coverage without manually crafting data.",
+    whatToBuild: ["Test data generator — creates synthetic but realistic SIMS records (orders, devices, configs)", "Test case auto-generator — converts test scenarios into Xray/Jira test cases", "Validation scenario builder — defines expected vs actual outputs", "Data seeding scripts for test environments"],
+    dataSources: ["SIMS schema (via DG Network — access needed)", "Existing manual test cases in Xray", "SIMS business rules documentation"],
+    steps: ["Get DG Network access approved — BLOCKER", "Document all SIMS entities needing test data (devices, orders, configs, users)", "Build data model + generation templates using Faker/domain rules", "Integrate with Xray API to push generated test cases", "Run generation for a sample module, validate output", "Iterate with QA team feedback", "Full rollout across all SIMS modules"],
+    acceptance: ["Generated test data passes SIMS validation rules without errors", "Test cases created in Xray with correct Epic/Story links", "Reduces manual test data prep time by ≥60%", "Supports at least 10 SIMS entity types"]
+  },
+  "BOPCAutomation": {
+    goal: "Automate BOPC desktop application test execution using Playwright for web layers, PyAutoGUI for native UI interactions, and Azure OCR for reading screen content.",
+    whatToBuild: ["Playwright scripts for BOPC web-based flows", "PyAutoGUI scripts for native Windows UI actions (menus, dialogs)", "Azure OCR integration to read on-screen values and validate outputs", "Test runner with pass/fail reporting", "Reusable action library for common BOPC operations"],
+    dataSources: ["BOPC application (desktop install)", "Azure Cognitive Services (OCR API)", "Existing manual test cases to automate"],
+    steps: ["POC complete — now scale up", "Map all BOPC test cases to automation candidates", "Build core action library (login, navigation, data entry)", "Implement OCR-based assertions for screen validation", "Integrate with CI/CD or test scheduler", "Run full regression suite, measure pass rate", "Document framework for team onboarding"],
+    acceptance: ["Automated suite covers ≥70% of existing manual BOPC test cases", "OCR assertions achieve ≥95% accuracy on BOPC screens", "Suite runs end-to-end in under 30 minutes", "Zero flaky tests in 3 consecutive runs"]
+  },
+  "EIOAnomalyAnalyzer": {
+    goal: "Detect anomalies in Electronic Inventory Operations by comparing expected inventory levels (from system records) against actual physical counts and flagging discrepancies.",
+    whatToBuild: ["Data ingestion pipeline — pulls expected vs actual inventory feeds", "Anomaly detection model (statistical + AI) to flag deviations", "Store-level anomaly dashboard with severity scoring", "Alert system for high-severity inventory gaps", "Root cause suggestion engine (shrinkage? receiving error? system bug?)"],
+    dataSources: ["EIO inventory system — expected stock levels", "Physical count data / scan data", "Historical anomaly patterns (from Mohit/Akhilesh's team)"],
+    steps: ["Receive shared codebase from Mohit/Akhilesh — ACTION NEEDED", "Understand existing POC logic and data sources", "Define anomaly thresholds by product category and store type", "Build or extend detection model", "Create dashboard UI", "Test on 10 stores, validate anomaly detection accuracy", "Productionize with scheduled runs"],
+    acceptance: ["Detects ≥85% of known historical anomalies", "False positive rate below 10%", "Dashboard shows anomaly by store, category, and severity", "Alert triggers within 1 hour of data refresh"]
+  },
+  "DigitalOOSAnalyzer": {
+    goal: "Identify out-of-stock discrepancies between what the digital platform shows as available and what is physically present in stores.",
+    whatToBuild: ["Digital inventory feed connector (website/app availability data)", "Physical inventory feed connector (store system data)", "Discrepancy comparison engine — SKU-level digital vs physical diff", "OOS heatmap by store and product category", "Automated daily report with top discrepancies"],
+    dataSources: ["Digital platform inventory API", "Store POS / inventory management system", "Product master catalog"],
+    steps: ["Map digital inventory data structure to physical inventory schema", "Build ETL to join both feeds on SKU + store", "Define OOS discrepancy rules (threshold per category)", "Build comparison engine", "Create heatmap dashboard", "Schedule daily runs and email report", "Validate with store ops team"],
+    acceptance: ["Covers 100% of SKUs listed on digital platform", "Discrepancy report generated daily by 6 AM", "Heatmap loads in under 5s", "Store team can drill down to SKU level per store"]
+  },
+  "TestDataGen": {
+    goal: "Identify missing test data gaps in the Open Access test suite and auto-generate the missing data to increase the First Pass Rate (FPR) of test executions.",
+    whatToBuild: ["Test gap analyzer — scans existing test cases and flags missing data scenarios", "Data generator for Open Access entities", "FPR tracker — before and after comparison dashboard", "Integration with test execution pipeline to auto-seed data pre-run"],
+    dataSources: ["Open Access test suite (existing test cases)", "Open Access application schema", "Historical test execution reports (pass/fail logs)"],
+    steps: ["Audit current test suite — identify all data-dependent test cases", "Categorize failures by missing data type", "Build data generation templates per entity type", "Integrate generation step into test pipeline", "Run test suite with generated data, measure FPR improvement", "Iterate on gaps until FPR target is met"],
+    acceptance: ["FPR improves by ≥20% post data generation", "All data-dependent test cases have required seed data", "Generation completes before test run starts (under 5 min)", "Supports regression and smoke suite scenarios"]
+  },
+  "BatchJobValidation": {
+    goal: "Validate VNC batch job executions — ensuring jobs run on schedule, complete successfully, and produce correct outputs.",
+    whatToBuild: ["Batch job registry — catalog of all VNC batch jobs with expected schedules and outputs", "Execution monitor — tracks actual run times vs expected", "Output validator — checks job outputs for completeness and correctness", "Failure alerting and escalation flow", "Historical job health dashboard"],
+    dataSources: ["VNC batch job scheduler logs", "Job output files / database tables", "Expected output specifications per job"],
+    steps: ["Catalog all active VNC batch jobs (name, schedule, owner, output)", "Connect to job scheduler to pull execution logs", "Define validation rules per job (row count, column checks, time bounds)", "Build monitoring dashboard", "Set up alerts for missed/failed jobs", "Test with 1 week of historical data", "Go live with real-time monitoring"],
+    acceptance: ["All batch jobs cataloged with validation rules", "Missed jobs alerted within 15 minutes of expected start time", "Output validation catches ≥90% of known failure patterns", "Dashboard shows 30-day job health history"]
+  },
+  "PromoCreator": {
+    goal: "Build a tool for the Pricing team to create, manage, and publish promotional campaigns — from defining promo rules to generating store-ready materials.",
+    whatToBuild: ["Promo campaign builder — define start/end dates, eligible SKUs, discount type, stores", "Promo rule engine — validates conflicts, overlaps, margin impact", "Campaign approval workflow", "Export to store systems (POS promo tables)", "Promo calendar view"],
+    dataSources: ["Pricing master data (SKU, cost, regular price)", "Store list and region mapping", "POS promo table schema"],
+    steps: ["Align with Pricing team on current promo creation process — START AFTER TEAM MOVE", "Map all promo types (%, BOGO, bundle, fixed price)", "Build campaign creation UI", "Build rule engine for conflict detection", "Integrate with POS export", "UAT with Pricing team on 3 real campaigns", "Go live"],
+    acceptance: ["Campaign creation takes under 10 minutes vs current manual process", "Conflict detection catches overlapping promos automatically", "POS export file accepted by store systems without errors", "Supports all existing promo types used by DG Pricing team"]
+  },
+  "PLUPrice": {
+    goal: "Automate the daily comparison of production pricing between Stritech audit reports and PLU data, and validate prices across GOLD and POS systems to catch discrepancies.",
+    whatToBuild: ["Stritech audit report parser — extracts daily pricing data", "PLU data connector — pulls current PLU price records", "GOLD vs POS price comparator — SKU-level diff engine", "Discrepancy report with severity classification", "Trend dashboard — recurring price mismatches over time"],
+    dataSources: ["Stritech daily audit reports (PDF/CSV)", "PLU master data table", "GOLD pricing system", "POS pricing tables"],
+    steps: ["Automate Stritech report ingestion (already in progress)", "Build PLU data pull pipeline", "Build GOLD ↔ POS comparison logic", "Define discrepancy severity rules (critical vs warning)", "Generate daily report and email to Pricing team", "Build trend dashboard for recurring issues", "Validate with Pricing team on 2 weeks of data"],
+    acceptance: ["Daily report generated automatically by 7 AM", "Covers 100% of active PLUs", "Price discrepancies classified as Critical / Warning / Info", "Dashboard shows 90-day discrepancy trend per SKU category"]
+  },
+  "OrphanedDefects": {
+    goal: "Generate a weekly report listing all defects and test cases that are missing required metadata — Severity, Team Name, Epic Link, Labels, or Story/Epic links — so teams can fix them.",
+    whatToBuild: ["Jira query engine — fetches all defects and TCs across projects", "Metadata completeness checker — flags missing fields per item", "Categorized orphan report (by team, project, age)", "Auto-assign suggestions using AI (suggest correct Epic/label based on description)", "Weekly email digest to team leads"],
+    dataSources: ["Jira REST API — defects, test cases, epics, labels, stories", "Team-to-project mapping config"],
+    steps: ["Define required metadata fields for defects and TCs", "Build Jira API connector with pagination", "Build completeness checker logic", "Categorize orphans by team and project", "Add AI suggestion layer for auto-assignment", "Build report template (HTML email + CSV)", "Schedule weekly run every Monday 8 AM", "Send to team leads for action"],
+    acceptance: ["Report covers all defects and TCs across all active projects", "Zero false positives (items flagged correctly as orphaned)", "AI suggestions are accurate ≥70% of the time", "Report delivered every Monday by 9 AM"]
+  },
+  "MerchOverview": {
+    goal: "Build a Merchandising operations overview dashboard showing defect trends, store performance metrics, and operational analytics for the Merch team. (Currently on hold — similar dashboard exists.)",
+    whatToBuild: ["Defect trend charts by module, sprint, and team", "Store performance KPI tiles", "Release health indicators", "Drill-down by team or feature area"],
+    dataSources: ["Jira defect data", "Store ops metrics", "Release history"],
+    steps: ["Re-evaluate vs existing dashboards — confirm unique value", "If proceeding: define KPIs with Kasthuri", "Source data feeds", "Build in PowerBI or custom web UI", "Review with Merch team"],
+    acceptance: ["Dashboard provides insights not covered by existing tools", "Merch team confirms value before full build"]
+  },
+  "WSRDashboard": {
+    goal: "Automate Weekly Status Report generation — aggregating incidents, defects, releases, and key metrics into a single dashboard for stakeholder review. (On hold.)",
+    whatToBuild: ["Incident summary feed (count, severity, resolution time)", "Defect delta (new, closed, open) per week", "Release summary (what went out, what's planned)", "Key metrics tiles with WoW trend arrows", "Auto-generated narrative summary using Gen AI"],
+    dataSources: ["Jira (defects, incidents)", "Release management system", "ServiceNow or incident tracker"],
+    steps: ["Define WSR template with stakeholders", "Source all data feeds", "Build weekly aggregation pipeline", "Add AI narrative layer", "Output as PDF + live dashboard", "Schedule weekly generation"],
+    acceptance: ["WSR generated automatically with zero manual input", "Covers all defined KPIs", "AI narrative is accurate and stakeholder-ready"]
+  },
+  "MonthlyMetrics": {
+    goal: "Auto-generate a monthly performance metrics dashboard showing KPIs, trends, and team achievements — replacing manual monthly report preparation. (On hold.)",
+    whatToBuild: ["KPI tiles: test coverage, defect density, release frequency, incident rate", "Month-over-month trend charts", "Team achievement highlights (auto-extracted from Jira closures)", "Export to PowerPoint for exec review"],
+    dataSources: ["Jira", "Release tracker", "Incident management system"],
+    steps: ["Define monthly KPI catalog with leadership", "Build data aggregation pipeline (monthly rollup)", "Build dashboard + PPT export", "Add AI-generated highlights section", "Schedule monthly run"],
+    acceptance: ["Report ready by 1st of each month", "All KPIs accurate vs manual calculation", "PPT export accepted by leadership for exec reviews"]
+  },
+  "ReleaseTracker": {
+    goal: "Build a software release tracking system that shows deployment schedules, current release status, change logs, and risk indicators across all DG tech domains.",
+    whatToBuild: ["Release calendar — planned deployments with dates, envs, owners", "Status tracker — per release: dev, QA, UAT, prod", "Change log viewer — what changed in each release", "Risk flag engine — auto-flag releases with open critical defects or failed QA", "Stakeholder notification system"],
+    dataSources: ["Jira releases / fix versions", "Deployment pipeline (Jenkins/Azure DevOps)", "Change management system"],
+    steps: ["Catalog all active release streams across domains", "Build Jira release feed connector", "Build release calendar UI", "Add change log aggregator per release", "Implement risk flag logic (open crits, failed tests)", "Integrate notifications (email/Slack)", "Pilot with 2 domains, then expand"],
+    acceptance: ["All active releases visible with real-time status", "Risk flags appear within 1 hour of trigger event", "Change log populated automatically from Jira", "Notifications sent to correct stakeholders per release"]
+  },
+  "DefectPredictor": {
+    goal: "Use ML to analyze historical defect data and predict which modules, features, or releases are likely to produce defects — enabling proactive testing focus.",
+    whatToBuild: ["Historical defect dataset pipeline (Jira export + enrichment)", "Feature engineering — extract signals: change velocity, code churn, test coverage, past defect density", "ML model training (classification: high/medium/low defect risk)", "Prediction dashboard — risk score per module/sprint", "Integration with test planning (flag high-risk areas for extra coverage)"],
+    dataSources: ["Jira defect history (all projects, 2+ years)", "Code change logs (Git/Azure DevOps)", "Test coverage reports", "Release history"],
+    steps: ["Extract and clean 2+ years of Jira defect data", "Engineer features (defect density, fix time, recurrence)", "Train baseline model (Random Forest or XGBoost)", "Validate on last 6 months of data (precision/recall)", "Build prediction API", "Integrate risk scores into test planning workflow", "Retrain model monthly"],
+    acceptance: ["Model predicts high-risk modules with ≥75% precision", "Risk scores available before sprint test planning", "Dashboard shows top 10 risk areas per upcoming release", "Model retraining is automated monthly"]
+  },
+  "IncidentAnalyzer": {
+    goal: "Analyze system incidents to provide AI-powered categorization, root cause insights, and pattern detection — reducing MTTR and preventing recurrence.",
+    whatToBuild: ["Incident ingestion connector (ServiceNow / PagerDuty)", "AI categorization engine — classifies incident by type, system, impact", "Root cause analysis assistant — uses incident description + logs to suggest RCA", "Pattern detector — finds recurring incident signatures", "Team-level incident health dashboard"],
+    dataSources: ["ServiceNow incident tickets", "System logs (where available)", "Past RCA documents"],
+    steps: ["Connect to incident management system API", "Define incident taxonomy (categories, severity levels, system tags)", "Build AI classification layer (fine-tuned or prompt-based)", "Build RCA suggestion engine using incident + log context", "Build pattern detection (clustering similar incidents)", "Dashboard with team filters and trend view", "Pilot with 3 months of historical incidents"],
+    acceptance: ["AI categorizes incidents with ≥80% accuracy vs manual labels", "RCA suggestions accepted by L2 engineers ≥60% of the time", "Pattern detection surfaces recurring issues within 24h of recurrence", "Dashboard filters by team, system, severity, date range"]
+  },
+  "ProblemAnalyzer": {
+    goal: "Analyze Problem tickets in ITSM to search, categorize, and provide AI-powered insights — helping teams identify systemic issues and prioritize resolution.",
+    whatToBuild: ["Problem ticket ingestion from ServiceNow", "AI categorization and tagging engine", "Duplicate/related problem detector", "Root cause hypothesis generator", "Problem aging dashboard — unresolved problems by age and severity"],
+    dataSources: ["ServiceNow Problem module", "Related incident links", "KB articles"],
+    steps: ["Connect to ServiceNow Problem API", "Build categorization model (or reuse IncidentAnalyzer taxonomy)", "Build duplicate detection using semantic similarity", "Add RCA hypothesis prompting", "Build aging dashboard", "Validate with ITSM team on 6 months of problem data"],
+    acceptance: ["Covers all open and recently closed problem tickets", "Duplicate detection accuracy ≥75%", "RCA hypothesis generated within 10s of opening a problem record", "Dashboard shows aging by team and category"]
+  },
+  "KnowledgeScout": {
+    goal: "AI-powered internal knowledge base search using Gemini — enabling teams to find relevant documentation, SOPs, runbooks, and solutions quickly across all internal knowledge sources.",
+    whatToBuild: ["Knowledge source connectors (Confluence, SharePoint, internal wikis)", "Embedding pipeline — vectorize all KB articles", "Semantic search engine using Gemini embeddings", "Answer synthesis — AI composes answer from top-K documents", "Search UI with source citations and confidence score"],
+    dataSources: ["Confluence spaces", "SharePoint document libraries", "Internal wikis", "Past incident/problem resolution notes"],
+    steps: ["Inventory all internal knowledge sources", "Build connectors for each source (Confluence API, SharePoint API)", "Build embedding pipeline (chunk + vectorize documents)", "Store embeddings in vector DB (Pinecone or pgvector)", "Build Gemini-powered answer synthesis layer", "Build search UI with filters (domain, doc type, date)", "Index all sources, run QA on search quality", "Launch to pilot team"],
+    acceptance: ["Returns relevant results for ≥90% of test queries", "Answer synthesis cites correct source documents", "Search response time under 3s", "Covers all major internal knowledge repositories"]
+  },
+  "XrayVision": {
+    goal: "Deep-dive analysis tool for QA and ops teams to examine change requests, incidents, and system data — providing AI-powered multi-source insights and impact analysis.",
+    whatToBuild: ["Multi-source data connector (Jira CRs, ServiceNow incidents, test results)", "AI-powered impact analyzer — given a CR, what could break?", "Cross-reference engine — links CRs to related incidents, defects, test cases", "Risk heatmap for change requests", "Analyst workspace — ask questions about any CR or incident in natural language"],
+    dataSources: ["Jira change requests and defects", "ServiceNow incidents", "Xray test execution results", "Release history"],
+    steps: ["Map all data sources and their relationships", "Build unified data model (CR ↔ incident ↔ defect ↔ test)", "Build AI impact analysis prompting layer", "Build cross-reference engine", "Create analyst workspace UI with NL query interface", "Test on 20 real CRs, validate impact predictions", "Onboard QA leads as pilot users"],
+    acceptance: ["Impact analysis covers all linked data sources", "NL query returns relevant results for ≥80% of test questions", "CR risk heatmap correlates with actual post-release incidents ≥70%", "Analyst workspace accessible without SQL knowledge"]
+  }
+};
+
+const DOMAIN_TAG = {
+  "StoreNet / SIMS":"tag-storenet","EIO":"tag-eio","Pricing":"tag-pricing",
+  "Generic Tools":"tag-generic","Metrics - Merch":"tag-metrics","Space Planning":"tag-space","VNC":"tag-vnc"
+};
+const STATUS_CLASS = {"In-Progress":"s-inprogress","Yet to Start":"s-yettostart","On-Hold":"s-onhold"};
+
+let currentDomain = 'all';
+let currentStatus = null;
+let currentType = 'all';
+
+function effColor(v){ return v>=60?"#34d99b":v>=30?"#f5a623":"#f0506e"; }
+function innColor(v){ return v>=7?"#5b7fff":v>=5?"#f5a623":"#f0506e"; }
+
+function getFiltered(){
+  let list = PROJECTS;
+  if(currentDomain!=='all') list=list.filter(p=>p.domain===currentDomain);
+  if(currentStatus) list=list.filter(p=>p.status===currentStatus);
+  if(currentType!=='all') list=list.filter(p=>p.type===currentType);
+  const q = document.getElementById('searchInput')?.value.toLowerCase()||'';
+  if(q) list=list.filter(p=>p.name.toLowerCase().includes(q)||p.owner.toLowerCase().includes(q)||p.domain.toLowerCase().includes(q)||p.id.toLowerCase().includes(q));
+  return list;
+}
+
+function renderCards(){
+  const list = getFiltered();
+  const grid = document.getElementById('projectsGrid');
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚡</div><p>No projects match your filters.</p></div>`;
+    document.getElementById('page-sub').textContent = 'No projects found';
+    return;
+  }
+  document.getElementById('page-sub').textContent = `Showing ${list.length} project${list.length!==1?'s':''} ${currentDomain!=='all'?'in '+currentDomain:'across all domains'}`;
+  grid.innerHTML = list.map((p,i)=>`
+    <div class="project-card" style="animation-delay:${i*0.04}s" onclick="openDetail('${p.id}')">
+      <div class="pc-top">
+        <div class="pc-name">${p.name}</div>
+        <span class="domain-tag ${DOMAIN_TAG[p.domain]}">${p.domain}</span>
+      </div>
+      <div class="pc-bars">
+        <div class="bar-row">
+          <span class="bar-name">Efficiency</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${p.efficiency}%;background:${effColor(p.efficiency)};"></div></div>
+          <span class="bar-num" style="color:${effColor(p.efficiency)};">${p.efficiency}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Innovation</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${p.innovation*10}%;background:${innColor(p.innovation)};"></div></div>
+          <span class="bar-num" style="color:${innColor(p.innovation)};">${p.innovation}/10</span>
+        </div>
+      </div>
+      <div class="pc-footer">
+        <span class="status-badge ${STATUS_CLASS[p.status]}">${p.status}</span>
+        <span class="owner-text">${p.owner!=='—'?p.owner:''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setView(domain, el){
+  currentDomain = domain; currentStatus = null;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+function setStatus(status, el){
+  currentStatus = status; currentDomain = 'all';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+function setTypeFilter(type, el){
+  currentType = type;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+function applyFilters(){ renderCards(); }
+
+// ── Persistent edits stored in memory (survives tab switches, lost on page reload) ──
+const EDITS = {};
+
+function getInstr(id){
+  const base = MODULE_INSTRUCTIONS[id] || {};
+  const saved = EDITS[id] || {};
+  return {
+    goal:         saved.goal        !== undefined ? saved.goal        : (base.goal||''),
+    whatToBuild:  saved.whatToBuild !== undefined ? [...saved.whatToBuild] : [...(base.whatToBuild||[])],
+    dataSources:  saved.dataSources !== undefined ? [...saved.dataSources] : [...(base.dataSources||[])],
+    steps:        saved.steps       !== undefined ? [...saved.steps]       : [...(base.steps||[])],
+    acceptance:   saved.acceptance  !== undefined ? [...saved.acceptance]  : [...(base.acceptance||[])],
+  };
+}
+
+function openDetail(id){
+  const p = PROJECTS.find(x=>x.id===id);
+  if(!p) return;
+  window._currentDetailId = id;
+  renderDetailPanel(id, 'tab-overview', false);
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function renderDetailPanel(id, activeTab, editMode){
+  const p = PROJECTS.find(x=>x.id===id);
+  const remark = INNOVATION_REMARKS[id]||'';
+  const instr = getInstr(id);
+
+  const tabs = [
+    {key:'tab-overview', label:'Overview'},
+    {key:'tab-build',    label:'What to Build'},
+    {key:'tab-data',     label:'Data Sources'},
+    {key:'tab-steps',    label:'Steps'},
+    {key:'tab-accept',   label:'Acceptance Criteria'},
+  ];
+
+  const tabsHtml = tabs.map(t=>`
+    <button class="dp-tab ${t.key===activeTab?'active':''}" onclick="switchTab(event,'${t.key}')">${t.label}</button>
+  `).join('');
+
+  // ── Edit toggle bar ──
+  const editBarHtml = `
+    <div class="edit-toggle-bar">
+      <span class="saved-badge" id="saved-badge">✓ Saved</span>
+      <div class="edit-btn-group">
+        ${editMode
+          ? `<button class="edit-btn cancel" onclick="cancelEdit('${id}','${activeTab}')">Cancel</button>
+             <button class="edit-btn save" onclick="saveEdit('${id}','${activeTab}')">Save changes</button>`
+          : `<button class="edit-btn" onclick="enterEdit('${id}','${activeTab}')">✎ Edit</button>`
+        }
+      </div>
+    </div>`;
+
+  // ── Tab content builders ──
+  function viewList(items, numbered){
+    if(!items.length) return `<p style="color:var(--text3);font-size:13px;">Nothing added yet — click Edit to add items.</p>`;
+    return `<ul class="instr-list">${items.map((s,i)=>`
+      <li>
+        ${numbered ? `<span class="instr-num">${i+1}</span>` : `<span class="instr-bullet"></span>`}
+        <span>${s}</span>
+      </li>`).join('')}</ul>`;
+  }
+
+  function editList(items, fieldName, numbered){
+    const rows = items.map((s,i)=>`
+      <div class="edit-list-item" id="${fieldName}-item-${i}">
+        ${numbered ? `<span class="instr-num" style="margin-top:10px;">${i+1}</span>` : `<span class="instr-bullet" style="margin-top:14px;"></span>`}
+        <textarea rows="2" id="${fieldName}-${i}" oninput="autoResize(this)">${escHtml(s)}</textarea>
+        <button class="del-btn" onclick="deleteItem('${fieldName}',${i})">✕</button>
+      </div>`).join('');
+    return `${rows}
+      <button class="add-item-btn" onclick="addItem('${fieldName}')">+ Add item</button>`;
+  }
+
+  // ── inline edit field helpers ──
+  function editField(label, fieldId, value, type='text'){
+    if(type==='select-priority') return `
+      <div class="dp-info-row">
+        <span class="dp-info-key">${label}</span>
+        <select id="${fieldId}" class="edit-inline-select">
+          <option ${value==='High'?'selected':''}>High</option>
+          <option ${value==='Medium'?'selected':''}>Medium</option>
+          <option ${value==='Low'?'selected':''}>Low</option>
+        </select>
+      </div>`;
+    if(type==='select-status') return `
+      <div class="dp-info-row">
+        <span class="dp-info-key">${label}</span>
+        <select id="${fieldId}" class="edit-inline-select">
+          <option ${value==='In-Progress'?'selected':''}>In-Progress</option>
+          <option ${value==='Yet to Start'?'selected':''}>Yet to Start</option>
+          <option ${value==='On-Hold'?'selected':''}>On-Hold</option>
+        </select>
+      </div>`;
+    if(type==='select-type') return `
+      <div class="dp-info-row">
+        <span class="dp-info-key">${label}</span>
+        <select id="${fieldId}" class="edit-inline-select">
+          <option ${value==='Gen AI'?'selected':''}>Gen AI</option>
+          <option ${value==='Project'?'selected':''}>Project</option>
+        </select>
+      </div>`;
+    return `
+      <div class="dp-info-row">
+        <span class="dp-info-key">${label}</span>
+        <input id="${fieldId}" class="edit-inline-input" type="text" value="${escHtml(value)}" />
+      </div>`;
+  }
+
+  // ── Overview tab ──
+  const overviewContent = editMode ? `
+    <div class="edit-section-label">Goal / Description</div>
+    <textarea class="edit-textarea" id="field-goal" rows="4" oninput="autoResize(this)">${escHtml(instr.goal)}</textarea>
+    <div class="dp-section" style="margin-top:16px;">
+      <div class="dp-section-title">Project details</div>
+      ${editField('Owner',    'field-owner',    p.owner)}
+      ${editField('Priority', 'field-priority', p.priority, 'select-priority')}
+      ${editField('Status',   'field-status',   p.status,   'select-status')}
+      ${editField('Type',     'field-type',     p.type,     'select-type')}
+      ${editField('Domain',   'field-domain',   p.domain)}
+    </div>
+    <div class="dp-section" style="margin-top:16px;">
+      <div class="dp-section-title">Scores</div>
+      <div class="dp-info-row">
+        <span class="dp-info-key">Efficiency %</span>
+        <input id="field-efficiency" class="edit-inline-input" type="number" min="0" max="100" value="${p.efficiency}" style="width:70px;" />
+      </div>
+      <div class="dp-info-row">
+        <span class="dp-info-key">Innovation (0–10)</span>
+        <input id="field-innovation" class="edit-inline-input" type="number" min="0" max="10" value="${p.innovation}" style="width:70px;" />
+      </div>
+    </div>
+    <div class="dp-section" style="margin-top:16px;">
+      <div class="dp-section-title">Notes & Blockers</div>
+      <textarea class="edit-textarea" id="field-notes" rows="3" oninput="autoResize(this)" placeholder="Add notes or blockers...">${escHtml(p.notes||'')}</textarea>
+    </div>` : `
+    ${instr.goal ? `<div class="goal-box" style="margin-bottom:14px;">${instr.goal}</div>` : `<p style="color:var(--text3);font-size:13px;margin-bottom:14px;">No goal set — click Edit to add one.</p>`}
+    <div class="dp-section">
+      <div class="dp-section-title">Project details</div>
+      <div class="dp-info-row"><span class="dp-info-key">Owner</span><span class="dp-info-val">${p.owner}</span></div>
+      <div class="dp-info-row"><span class="dp-info-key">Priority</span><span class="dp-info-val">${p.priority}</span></div>
+      <div class="dp-info-row"><span class="dp-info-key">Status</span><span class="dp-info-val"><span class="status-badge ${STATUS_CLASS[p.status]}">${p.status}</span></span></div>
+      <div class="dp-info-row"><span class="dp-info-key">Type</span><span class="dp-info-val">${p.type}</span></div>
+      <div class="dp-info-row"><span class="dp-info-key">Domain</span><span class="dp-info-val">${p.domain}</span></div>
+    </div>
+    <div class="dp-section" style="margin-top:14px;">
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px;"><span>Completion efficiency</span><span style="color:${effColor(p.efficiency)};font-weight:600;">${p.efficiency}%</span></div>
+        <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;"><div style="width:${p.efficiency}%;height:100%;border-radius:4px;background:${effColor(p.efficiency)};"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px;"><span>Innovation vs industry</span><span style="color:${innColor(p.innovation)};font-weight:600;">${p.innovation}/10</span></div>
+        <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;"><div style="width:${p.innovation*10}%;height:100%;border-radius:4px;background:${innColor(p.innovation)};"></div></div>
+      </div>
+    </div>
+    ${remark ? `<div class="dp-section" style="margin-top:14px;"><div class="dp-section-title">Innovation remarks</div><div class="dp-notes">${remark}</div></div>` : ''}
+    ${p.notes ? `<div class="dp-section" style="margin-top:14px;"><div class="dp-section-title">Notes & blockers</div><div class="dp-notes" style="border-color:var(--red);">${p.notes}</div></div>` : ''}`;
+
+  const buildContent  = editMode ? editList(instr.whatToBuild, 'whatToBuild', false) : viewList(instr.whatToBuild, false);
+  const dataContent   = editMode ? editList(instr.dataSources, 'dataSources',  false) : viewList(instr.dataSources,  false);
+  const stepsContent  = editMode ? editList(instr.steps,       'steps',        true)  : viewList(instr.steps,        true);
+  const acceptContent = editMode ? editList(instr.acceptance,  'acceptance',   false) : `
+    ${instr.acceptance.length
+      ? instr.acceptance.map(s=>`<div class="accept-item"><span class="check-icon">✓</span><span>${s}</span></div>`).join('')
+      : `<p style="color:var(--text3);font-size:13px;">Nothing added yet — click Edit to add criteria.</p>`}`;
+
+  const tabContents = {
+    'tab-overview': overviewContent,
+    'tab-build':    buildContent,
+    'tab-data':     dataContent,
+    'tab-steps':    stepsContent,
+    'tab-accept':   acceptContent,
+  };
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="dp-header">
+      <div class="dp-icon">${p.name.charAt(0)}</div>
+      <div>
+        <div class="dp-title">${p.name}</div>
+        <div class="dp-domain">${p.domain} · ${p.type} · <span style="color:var(--text3);">Owner: ${p.owner}</span></div>
+      </div>
+    </div>
+    <div class="dp-scores">
+      <div class="dp-score-card"><div class="dp-score-val" style="color:${effColor(p.efficiency)};">${p.efficiency}%</div><div class="dp-score-lbl">Efficiency</div></div>
+      <div class="dp-score-card"><div class="dp-score-val" style="color:${innColor(p.innovation)};">${p.innovation}/10</div><div class="dp-score-lbl">Innovation</div></div>
+      <div class="dp-score-card"><div class="dp-score-val"><span class="status-badge ${STATUS_CLASS[p.status]}" style="font-size:11px;">${p.status}</span></div><div class="dp-score-lbl">Status</div></div>
+    </div>
+    <div class="dp-tabs">${tabsHtml}</div>
+    ${editBarHtml}
+    ${tabs.map(t=>`<div id="${t.key}" class="dp-tab-content ${t.key===activeTab?'active':''}">${tabContents[t.key]}</div>`).join('')}
+  `;
+}
+
+function switchTab(e, tabId){
+  const id = window._currentDetailId;
+  const panel = document.getElementById('detailPanel');
+  panel.querySelectorAll('.dp-tab').forEach(t=>t.classList.remove('active'));
+  panel.querySelectorAll('.dp-tab-content').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+  window._currentTab = tabId;
+}
+
+function enterEdit(id, tab){
+  window._currentTab = tab;
+  renderDetailPanel(id, tab, true);
+  document.getElementById('detailPanel').scrollTop = 0;
+}
+
+function cancelEdit(id, tab){
+  renderDetailPanel(id, tab, false);
+}
+
+function saveEdit(id, tab){
+  if(!EDITS[id]) EDITS[id] = {};
+  const p = PROJECTS.find(x=>x.id===id);
+
+  // ── Save goal ──
+  const goalEl = document.getElementById('field-goal');
+  if(goalEl) EDITS[id].goal = goalEl.value.trim();
+
+  // ── Save project detail fields directly into PROJECTS array ──
+  const fieldMap = {
+    'field-owner':      'owner',
+    'field-priority':   'priority',
+    'field-status':     'status',
+    'field-type':       'type',
+    'field-domain':     'domain',
+    'field-efficiency': 'efficiency',
+    'field-innovation': 'innovation',
+    'field-notes':      'notes',
+  };
+  Object.entries(fieldMap).forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const raw = el.value.trim();
+    if(key === 'efficiency') p[key] = Math.min(100, Math.max(0, parseInt(raw)||0));
+    else if(key === 'innovation') p[key] = Math.min(10, Math.max(0, parseInt(raw)||0));
+    else p[key] = raw;
+  });
+
+  // ── Save list fields ──
+  ['whatToBuild','dataSources','steps','acceptance'].forEach(field=>{
+    const items = [];
+    let i = 0;
+    while(true){
+      const el = document.getElementById(`${field}-${i}`);
+      if(!el) break;
+      const v = el.value.trim();
+      if(v) items.push(v);
+      i++;
+    }
+    if(document.querySelector(`[id^="${field}-"]`)){
+      EDITS[id][field] = items;
+    }
+  });
+
+  renderDetailPanel(id, tab, false);
+  // Re-render cards so owner/status changes reflect on the grid
+  renderCards();
+
+  // Flash saved badge
+  setTimeout(()=>{
+    const badge = document.getElementById('saved-badge');
+    if(badge){ badge.classList.add('show'); setTimeout(()=>badge.classList.remove('show'), 2500); }
+  }, 50);
+}
+
+function deleteItem(fieldName, idx){
+  const id = window._currentDetailId;
+  const tab = window._currentTab || 'tab-overview';
+  if(!EDITS[id]) EDITS[id] = {};
+  const base = getInstr(id);
+  const arr = (EDITS[id][fieldName] !== undefined ? EDITS[id][fieldName] : [...(base[fieldName]||[])]);
+  // Collect current textarea values first
+  let i=0;
+  const live=[];
+  while(true){ const el=document.getElementById(`${fieldName}-${i}`); if(!el) break; live.push(el.value.trim()); i++; }
+  live.splice(idx,1);
+  EDITS[id][fieldName] = live;
+  renderDetailPanel(id, tab, true);
+}
+
+function addItem(fieldName){
+  const id = window._currentDetailId;
+  const tab = window._currentTab || 'tab-overview';
+  if(!EDITS[id]) EDITS[id] = {};
+  // Collect current values
+  let i=0; const live=[];
+  while(true){ const el=document.getElementById(`${fieldName}-${i}`); if(!el) break; live.push(el.value.trim()); i++; }
+  live.push('');
+  EDITS[id][fieldName] = live;
+  renderDetailPanel(id, tab, true);
+  // Focus new textarea
+  setTimeout(()=>{ const last=document.getElementById(`${fieldName}-${live.length-1}`); if(last){ last.focus(); last.scrollIntoView({behavior:'smooth',block:'nearest'}); }},50);
+}
+
+function autoResize(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function closeDetail(e){ if(e.target===document.getElementById('detailOverlay')) closeDetailBtn(); }
+function closeDetailBtn(){ document.getElementById('detailOverlay').classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDetailBtn(); });
+
+// Charts
+new Chart(document.getElementById('statusChart'),{
+  type:'doughnut',
+  data:{labels:['In progress','Yet to start','On hold'],datasets:[{data:[4,13,3],backgroundColor:['#34d99b','#f5a623','#f0506e'],borderWidth:0,hoverOffset:4}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw}`}}}}
+});
+
+new Chart(document.getElementById('priorityChart'),{
+  type:'bar',
+  data:{labels:['High','Medium','Low'],datasets:[{data:[8,6,6],backgroundColor:['#f0506e','#f5a623','#34d99b'],borderWidth:0,borderRadius:6,borderSkipped:false}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#555870',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555870',font:{size:11},stepSize:2}}}}
+});
+
+new Chart(document.getElementById('bubbleChart'),{
+  type:'bubble',
+  data:{
+    datasets: PROJECTS.map(p=>({
+      label:p.name,
+      data:[{x:p.efficiency,y:p.innovation,r:p.priority==='High'?9:p.priority==='Medium'?6:4}],
+      backgroundColor:p.status==='In-Progress'?'rgba(52,217,155,0.7)':p.status==='On-Hold'?'rgba(240,80,110,0.6)':'rgba(91,127,255,0.5)',
+    }))
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>i[0].dataset.label,label:i=>`Efficiency: ${i.raw.x}%  |  Innovation: ${i.raw.y}/10`}}},
+    scales:{
+      x:{title:{display:true,text:'Efficiency %',color:'#555870',font:{size:10}},min:0,max:100,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555870',font:{size:10}}},
+      y:{title:{display:true,text:'Innovation',color:'#555870',font:{size:10}},min:0,max:11,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555870',font:{size:10}}}
+    },
+    layout:{padding:12}
+  }
+});
+
+renderCards();
+</script>
+</body>
+</html>
