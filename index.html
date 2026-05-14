@@ -355,6 +355,76 @@ body {
   .metrics-row { grid-template-columns: repeat(3, 1fr); }
   .charts-row { grid-template-columns: 1fr; }
 }
+
+/* ── GITHUB CONFIG MODAL ── */
+.gh-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+}
+.gh-modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px; width: 480px; max-width: 95vw;
+  padding: 2rem; position: relative;
+}
+.gh-modal-logo {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg,#1f6feb,#388bfd);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1rem;
+}
+.gh-modal-title { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; margin-bottom: 6px; }
+.gh-modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.6; }
+.gh-field { margin-bottom: 1rem; }
+.gh-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+.gh-field input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px; font-size: 13px;
+  color: var(--text); font-family: var(--font-body); outline: none;
+  transition: border-color 0.15s;
+}
+.gh-field input:focus { border-color: var(--accent); }
+.gh-field input::placeholder { color: var(--text3); }
+.gh-btn-row { display: flex; gap: 10px; margin-top: 1.5rem; }
+.gh-btn {
+  flex: 1; padding: 10px; border-radius: 10px; border: none;
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.gh-btn-primary { background: var(--accent); color: #fff; }
+.gh-btn-primary:hover { opacity: 0.9; }
+.gh-btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.gh-btn-secondary:hover { color: var(--text); border-color: var(--border2); }
+.gh-hint { font-size: 11px; color: var(--text3); margin-top: 12px; line-height: 1.6; }
+.gh-hint a { color: var(--accent); text-decoration: none; }
+.gh-hint a:hover { text-decoration: underline; }
+.gh-error { font-size: 12px; color: var(--red); margin-top: 8px; display: none; }
+
+/* ── SYNC STATUS BAR ── */
+.sync-bar {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--text2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  opacity: 0; transform: translateY(10px);
+  transition: all 0.3s; pointer-events: none;
+}
+.sync-bar.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+.sync-bar.success { border-color: rgba(52,217,155,0.4); }
+.sync-bar.error { border-color: rgba(240,80,110,0.4); }
+.sync-bar.saving { border-color: rgba(91,127,255,0.4); }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sync-bar.success .sync-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.sync-bar.error .sync-dot { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.sync-bar.saving .sync-dot { background: var(--accent); animation: pulse 1s infinite; }
+.sync-reconfigure {
+  margin-left: 6px; font-size: 11px; color: var(--accent);
+  cursor: pointer; text-decoration: underline; background: none; border: none;
+  font-family: var(--font-body); padding: 0;
+}
 </style>
 </head>
 <body>
@@ -536,6 +606,49 @@ body {
     <button class="dp-close" onclick="closeDetailBtn()">✕</button>
     <div id="detailContent"></div>
   </div>
+</div>
+
+<!-- GITHUB CONFIG MODAL -->
+<div class="gh-modal-overlay" id="ghModal" style="display:none;">
+  <div class="gh-modal">
+    <div class="gh-modal-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+    </div>
+    <div class="gh-modal-title">Connect to GitHub</div>
+    <div class="gh-modal-sub">Enter your GitHub details once. All edits will be saved directly to your repo so your whole team sees live updates when they refresh.</div>
+    <div class="gh-field">
+      <label>GitHub Username / Org</label>
+      <input type="text" id="gh-owner" placeholder="e.g. john-doe or my-org" />
+    </div>
+    <div class="gh-field">
+      <label>Repository Name</label>
+      <input type="text" id="gh-repo" placeholder="e.g. dg-dashboard" />
+    </div>
+    <div class="gh-field">
+      <label>Branch</label>
+      <input type="text" id="gh-branch" placeholder="main" value="main" />
+    </div>
+    <div class="gh-field">
+      <label>Personal Access Token <span style="color:var(--text3);font-weight:400;">(stored only in your browser)</span></label>
+      <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+    </div>
+    <div class="gh-error" id="gh-error"></div>
+    <div class="gh-btn-row">
+      <button class="gh-btn gh-btn-secondary" onclick="skipGitHub()">Use offline</button>
+      <button class="gh-btn gh-btn-primary" onclick="connectGitHub()">Connect &amp; Load data</button>
+    </div>
+    <div class="gh-hint">
+      Need a token? <a href="https://github.com/settings/tokens/new?scopes=repo&description=DG+Dashboard" target="_blank">Create one here</a> — enable the <strong>repo</strong> scope only.<br/>
+      Your token is saved in <code>localStorage</code> and never sent anywhere except GitHub's own API.
+    </div>
+  </div>
+</div>
+
+<!-- SYNC STATUS BAR -->
+<div class="sync-bar" id="syncBar">
+  <div class="sync-dot"></div>
+  <span id="syncMsg">Saved to GitHub</span>
+  <button class="sync-reconfigure" onclick="showGhModal()">Reconfigure</button>
 </div>
 
 <script>
@@ -1064,14 +1177,16 @@ function saveEdit(id, tab){
   });
 
   renderDetailPanel(id, tab, false);
-  // Re-render cards so owner/status changes reflect on the grid
   renderCards();
 
-  // Flash saved badge
+  // Flash in-panel saved badge
   setTimeout(()=>{
     const badge = document.getElementById('saved-badge');
     if(badge){ badge.classList.add('show'); setTimeout(()=>badge.classList.remove('show'), 2500); }
   }, 50);
+
+  // ── Push to GitHub ──
+  ghSaveData();
 }
 
 function deleteItem(fieldName, idx){
@@ -1144,6 +1259,198 @@ new Chart(document.getElementById('bubbleChart'),{
 });
 
 renderCards();
+
+// ════════════════════════════════════════════════════════════════
+//  GITHUB SYNC ENGINE
+//  Saves PROJECTS + EDITS as dashboard-data.json in your repo.
+//  Every teammate opening the page loads the latest data from
+//  that same file — so all edits are shared in real time.
+// ════════════════════════════════════════════════════════════════
+
+const GH_KEY   = 'dg_gh_config';   // localStorage key for credentials
+const DATA_PATH = 'dashboard-data.json'; // file path inside the repo
+
+let ghConfig = null;   // { owner, repo, branch, token }
+let ghFileSha = null;  // needed by GitHub API to update an existing file
+
+// ── Helpers ──
+function showSyncBar(state, msg, autohide = true){
+  const bar = document.getElementById('syncBar');
+  const msgEl = document.getElementById('syncMsg');
+  bar.className = 'sync-bar show ' + state;
+  msgEl.textContent = msg;
+  if(autohide) setTimeout(()=>bar.classList.remove('show'), 3500);
+}
+
+function showGhModal(){
+  const modal = document.getElementById('ghModal');
+  modal.style.display = 'flex';
+  // Pre-fill saved config if any
+  const saved = JSON.parse(localStorage.getItem(GH_KEY)||'null');
+  if(saved){
+    document.getElementById('gh-owner').value  = saved.owner  || '';
+    document.getElementById('gh-repo').value   = saved.repo   || '';
+    document.getElementById('gh-branch').value = saved.branch || 'main';
+    document.getElementById('gh-token').value  = saved.token  || '';
+  }
+}
+
+function hideGhModal(){
+  document.getElementById('ghModal').style.display = 'none';
+  document.getElementById('gh-error').style.display = 'none';
+}
+
+function skipGitHub(){
+  hideGhModal();
+  showSyncBar('error','Offline mode — changes won\'t be shared', false);
+}
+
+async function connectGitHub(){
+  const owner  = document.getElementById('gh-owner').value.trim();
+  const repo   = document.getElementById('gh-repo').value.trim();
+  const branch = document.getElementById('gh-branch').value.trim() || 'main';
+  const token  = document.getElementById('gh-token').value.trim();
+  const errEl  = document.getElementById('gh-error');
+
+  if(!owner || !repo || !token){
+    errEl.textContent = 'Please fill in all fields.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Test token by fetching repo info
+  errEl.style.display = 'none';
+  const btn = document.querySelector('.gh-btn-primary');
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+
+  try {
+    const test = await fetch(`https://api.github.com/repos/${owner}/${repo}`,{
+      headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }
+    });
+    if(!test.ok){ throw new Error(`Repo not found or token lacks access (${test.status})`); }
+
+    ghConfig = { owner, repo, branch, token };
+    localStorage.setItem(GH_KEY, JSON.stringify(ghConfig));
+
+    hideGhModal();
+    await ghLoadData();
+  } catch(e){
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Connect & Load data'; btn.disabled = false;
+  }
+}
+
+// ── Load data.json from GitHub and merge into PROJECTS + EDITS ──
+async function ghLoadData(){
+  if(!ghConfig) return;
+  showSyncBar('saving','Loading data from GitHub…', false);
+  try {
+    const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${DATA_PATH}?ref=${ghConfig.branch}`;
+    const res = await fetch(url,{
+      headers:{ Authorization:`token ${ghConfig.token}`, Accept:'application/vnd.github.v3+json' }
+    });
+
+    if(res.status === 404){
+      // File doesn't exist yet — push the current data as the first commit
+      showSyncBar('saving','First run — initialising data file…', false);
+      await ghSaveData(true);
+      showSyncBar('success','Data file created in GitHub ✓');
+      return;
+    }
+    if(!res.ok) throw new Error(`GitHub API error ${res.status}`);
+
+    const meta = await res.json();
+    ghFileSha = meta.sha;
+    const payload = JSON.parse(atob(meta.content.replace(/\n/g,'')));
+
+    // Merge saved PROJECTS fields back
+    if(Array.isArray(payload.projects)){
+      payload.projects.forEach(saved => {
+        const local = PROJECTS.find(p=>p.id===saved.id);
+        if(local) Object.assign(local, saved);
+      });
+    }
+    // Merge EDITS
+    if(payload.edits){
+      Object.assign(EDITS, payload.edits);
+    }
+
+    renderCards();
+    showSyncBar('success','Loaded latest data from GitHub ✓');
+  } catch(e){
+    showSyncBar('error','Could not load from GitHub: ' + e.message, false);
+  }
+}
+
+// ── Save PROJECTS + EDITS to GitHub as dashboard-data.json ──
+async function ghSaveData(isFirstRun = false){
+  if(!ghConfig){
+    showSyncBar('error','Not connected to GitHub — changes saved in browser only', false);
+    return;
+  }
+  showSyncBar('saving','Saving to GitHub…', false);
+  try {
+    const payload = { projects: PROJECTS, edits: EDITS };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+    const body = {
+      message: isFirstRun ? 'chore: initialise dashboard data' : 'chore: update dashboard data',
+      content,
+      branch: ghConfig.branch,
+    };
+    if(ghFileSha) body.sha = ghFileSha;
+
+    const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${DATA_PATH}`;
+    const res = await fetch(url,{
+      method: 'PUT',
+      headers:{
+        Authorization:`token ${ghConfig.token}`,
+        Accept:'application/vnd.github.v3+json',
+        'Content-Type':'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if(!res.ok){
+      const err = await res.json();
+      // Handle conflict: refetch SHA and retry once
+      if(res.status === 409 || res.status === 422){
+        await refreshSha();
+        await ghSaveData(isFirstRun);
+        return;
+      }
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    ghFileSha = data.content.sha;
+    showSyncBar('success','Saved to GitHub ✓');
+  } catch(e){
+    showSyncBar('error','Save failed: ' + e.message, false);
+  }
+}
+
+// ── Re-fetch the current SHA (needed if someone else pushed since last load) ──
+async function refreshSha(){
+  try {
+    const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${DATA_PATH}?ref=${ghConfig.branch}`;
+    const res = await fetch(url,{ headers:{ Authorization:`token ${ghConfig.token}`, Accept:'application/vnd.github.v3+json' }});
+    if(res.ok){ const d = await res.json(); ghFileSha = d.sha; }
+  } catch(_){}
+}
+
+// ── On page load: use hardcoded config, no modal needed ──
+(function init(){
+  ghConfig = {
+    owner:  'nareshk6',
+    repo:   'dg-project-merch-dashboard',
+    branch: 'main',
+    token:  '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'
+  };
+  ghLoadData();
+})();
 </script>
 </body>
 </html>
